@@ -32,24 +32,12 @@ fun LoginScreen(viewModel: AuthViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    when (val state = uiState) {
-        is AuthState.Success -> {
-            WelcomeScreen(
-                email = state.email,
-                provider = state.provider
-            ) {
-                viewModel.logout(context)
-            }
-        }
-        else -> {
-            AuthContent(
-                uiState = uiState,
-                onLoginEmail = { email, pass -> viewModel.loginWithEmail(email, pass) },
-                onRegisterEmail = { email, pass -> viewModel.registerWithEmail(email, pass) },
-                onLoginGoogle = { clientId -> viewModel.loginWithGoogle(context, clientId) }
-            )
-        }
-    }
+    AuthContent(
+        uiState = uiState,
+        onLoginEmail = { email, pass -> viewModel.loginWithEmail(email, pass) },
+        onRegisterEmail = { email, pass -> viewModel.registerWithEmail(email, pass) },
+        onLoginGoogle = { clientId -> viewModel.loginWithGoogle(context, clientId) }
+    )
 }
 
 @Composable
@@ -97,7 +85,7 @@ fun AuthContent(
         Text(
             text = if (isRegister) "Crear Cuenta" else "Bienvenido a Aerolineas TAE",
             fontSize = 32.sp,
-            lineHeight = 32.sp,
+            lineHeight = 40.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF003366),
             textAlign = TextAlign.Center,
@@ -206,65 +194,6 @@ fun AuthContent(
     }
 }
 
-@Composable
-fun WelcomeScreen(email: String, provider: String, onLogout: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "¡ Bienvenido !",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "Has iniciado sesión con:",
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
-        
-        Text(
-            text = email,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Surface(
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "Proveedor: $provider",
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-        ) {
-            Text("Cerrar Sesión")
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun AuthContentPreview() {
@@ -274,18 +203,6 @@ fun AuthContentPreview() {
             onLoginEmail = { _, _ -> },
             onRegisterEmail = { _, _ -> },
             onLoginGoogle = { }
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun WelcomeScreenPreview() {
-    MaterialTheme {
-        WelcomeScreen(
-            email = "usuario@example.com",
-            provider = "Google",
-            onLogout = { }
         )
     }
 }
