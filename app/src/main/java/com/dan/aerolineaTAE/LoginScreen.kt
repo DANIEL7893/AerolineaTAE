@@ -1,4 +1,4 @@
-package com.dan.walletlogin
+package com.dan.aerolineaTAE
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image

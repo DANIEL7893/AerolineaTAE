@@ -1,4 +1,4 @@
-package com.dan.walletlogin
+package com.dan.aerolineaTAE
 
 import android.content.Context
 import androidx.credentials.ClearCredentialStateRequest
@@ -12,7 +12,9 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthMultiFactorException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.MultiFactorResolver
 import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,13 @@ class AuthViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<AuthState>(AuthState.Idle)
     val uiState = _uiState.asStateFlow()
 
+    init {
+        // Verificar si ya hay un usuario logueado al iniciar el ViewModel
+        auth.currentUser?.let { user ->
+            _uiState.value = AuthState.Success(user.email ?: "", "Persisted")
+        }
+    }
+
     // login correo
     fun loginWithEmail(email: String, pass: String) {
         viewModelScope.launch {
@@ -33,6 +42,8 @@ class AuthViewModel : ViewModel() {
             try {
                 val user = auth.signInWithEmailAndPassword(email, pass).await().user
                 _uiState.value = AuthState.Success(user?.email ?: "", "Email")
+            } catch (e: FirebaseAuthMultiFactorException) {
+                _uiState.value = AuthState.RequiresMfa(e.resolver)
             } catch (e: Exception) {
                 _uiState.value = AuthState.Error(e.message ?: "error login")
             }
@@ -84,8 +95,14 @@ class AuthViewModel : ViewModel() {
         if (credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
             val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
             val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-            val user = auth.signInWithCredential(firebaseCredential).await().user
-            _uiState.value = AuthState.Success(user?.email ?: "", "Google")
+            try {
+                val user = auth.signInWithCredential(firebaseCredential).await().user
+                _uiState.value = AuthState.Success(user?.email ?: "", "Google")
+            } catch (e: FirebaseAuthMultiFactorException) {
+                _uiState.value = AuthState.RequiresMfa(e.resolver)
+            } catch (e: Exception) {
+                _uiState.value = AuthState.Error(e.message ?: "error google")
+            }
         } else {
             _uiState.value = AuthState.Error("Tipo: ${credential.type}")
         }
@@ -106,5 +123,6 @@ sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     data class Success(val email: String, val provider: String) : AuthState()
+    data class RequiresMfa(val resolver: MultiFactorResolver) : AuthState()
     data class Error(val message: String) : AuthState()
 }

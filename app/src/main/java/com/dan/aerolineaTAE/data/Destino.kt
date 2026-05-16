@@ -1,4 +1,4 @@
-package com.dan.walletlogin.data
+package com.dan.aerolineaTAE.data
 
 data class Destino(
     val ciudad: String,

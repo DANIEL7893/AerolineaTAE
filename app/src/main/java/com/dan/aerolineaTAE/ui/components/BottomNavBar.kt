@@ -1,4 +1,4 @@
-package com.dan.walletlogin.ui.components
+package com.dan.aerolineaTAE.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AirplaneTicket
@@ -10,10 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import com.dan.walletlogin.ui.theme.*
+import com.dan.aerolineaTAE.ui.theme.*
 
 sealed class BottomBarItem(val route: String, val title: String, val icon: ImageVector) {
-    object Reservar : BottomBarItem("reservar", "Reservar", Icons.Default.Search)
+    object Inicio : BottomBarItem("home", "Inicio", Icons.Default.Home)
+    object Reservar : BottomBarItem("buscar", "Reservar", Icons.Default.Search)
     object CheckIn : BottomBarItem("check-in", "Check-In", Icons.Default.AirplaneTicket)
     object MisViajes : BottomBarItem("mis_viajes", "Mis viajes", Icons.Default.AirplanemodeActive)
     object Perfil : BottomBarItem("perfil", "Perfil", Icons.Default.Person)
@@ -25,6 +26,7 @@ fun TaeBottomNavBar(
     onNavigate: (String) -> Unit
 ) {
     val items = listOf(
+        BottomBarItem.Inicio,
         BottomBarItem.Reservar,
         BottomBarItem.CheckIn,
         BottomBarItem.MisViajes,
@@ -51,7 +53,7 @@ fun TaeBottomNavBar(
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = AzulPrincipal,
-                    selectedTextColor = AzulPrincipal,
+                    selectedTextColor = Blanco,
                     indicatorColor = AzulMuyClaro,
                     unselectedIconColor = Blanco,
                     unselectedTextColor = Blanco
@@ -66,7 +68,7 @@ fun TaeBottomNavBar(
 fun TaeBottomNavBarPreview() {
     TaeTheme {
         TaeBottomNavBar(
-            currentRoute = "home",
+            currentRoute = "buscar",
             onNavigate = {}
         )
     }

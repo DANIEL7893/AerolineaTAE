@@ -1,4 +1,4 @@
-package com.dan.walletlogin.ui.screens
+package com.dan.aerolineaTAE.ui.screens
 
 import android.app.DatePickerDialog
 import androidx.compose.foundation.background
@@ -19,10 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dan.walletlogin.data.Destino
-import com.dan.walletlogin.data.destinosDisponibles
-import com.dan.walletlogin.ui.components.TaeBottomNavBar
-import com.dan.walletlogin.ui.theme.*
+import com.dan.aerolineaTAE.data.Destino
+import com.dan.aerolineaTAE.data.destinosDisponibles
+import com.dan.aerolineaTAE.ui.components.TaeBottomNavBar
+import com.dan.aerolineaTAE.ui.theme.*
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +35,7 @@ fun BuscarScreen(
     var destino by remember { mutableStateOf<Destino?>(null) }
     var fechaIda by remember { mutableStateOf("") }
     var fechaVuelta by remember { mutableStateOf("") }
-    var pasajeros by remember { mutableStateOf(1) }
+    var pasajeros by remember { mutableIntStateOf(1) }
 
     var mostrarSheet by remember { mutableStateOf(false) }
     var seleccionandoOrigen by remember { mutableStateOf(true) }
@@ -43,6 +43,18 @@ fun BuscarScreen(
     
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+
+    // Validaciones
+    val mismaCiudad = origen != null && destino != null && origen?.codigoIATA == destino?.codigoIATA
+    
+    val dateSDF = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val fechaIdaDate = try { dateSDF.parse(fechaIda) } catch (e: Exception) { null }
+    val fechaVueltaDate = try { dateSDF.parse(fechaVuelta) } catch (e: Exception) { null }
+    
+    val fechaInvalida = esIdaVuelta && fechaIdaDate != null && fechaVueltaDate != null && fechaVueltaDate.before(fechaIdaDate)
+    
+    val puedeBuscar = origen != null && destino != null && fechaIda.isNotEmpty() && 
+                     (!esIdaVuelta || fechaVuelta.isNotEmpty()) && !mismaCiudad && !fechaInvalida
 
     Scaffold(
         topBar = {
@@ -76,8 +88,7 @@ fun BuscarScreen(
                         containerColor = if (!esIdaVuelta) AzulPrincipal else Blanco,
                         contentColor = if (!esIdaVuelta) Blanco else AzulPrincipal
                     ),
-                    shape = RoundedCornerShape(8.dp),
-                    border = if (esIdaVuelta) ButtonDefaults.outlinedButtonBorder else null
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Solo ida")
                 }
@@ -88,8 +99,7 @@ fun BuscarScreen(
                         containerColor = if (esIdaVuelta) AzulPrincipal else Blanco,
                         contentColor = if (esIdaVuelta) Blanco else AzulPrincipal
                     ),
-                    shape = RoundedCornerShape(8.dp),
-                    border = if (!esIdaVuelta) ButtonDefaults.outlinedButtonBorder else null
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Ida y vuelta")
                 }
@@ -113,7 +123,7 @@ fun BuscarScreen(
                     )
                     
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Divider(color = AzulMuyClaro)
+                        HorizontalDivider(color = AzulMuyClaro)
                         IconButton(
                             onClick = { 
                                 val temp = origen
@@ -137,6 +147,15 @@ fun BuscarScreen(
                     )
                 }
             }
+            
+            if (mismaCiudad) {
+                Text(
+                    "El origen y destino no pueden ser iguales",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp, start = 8.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -150,11 +169,14 @@ fun BuscarScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         CampoBusqueda(
                             label = "Fecha de ida",
-                            valor = if (fechaIda.isEmpty()) "Elige fecha" else fechaIda,
+                            valor = fechaIda.ifEmpty { "Elige fecha" },
                             icon = Icons.Default.CalendarMonth,
                             onClick = {
-                                DatePickerDialog(context, { _, y, m, d -> fechaIda = "$d/${m+1}/$y" }, 
-                                    calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+                                val dialog = DatePickerDialog(context, { _, y, m, d -> 
+                                    fechaIda = String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y) 
+                                }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+                                dialog.datePicker.minDate = System.currentTimeMillis() - 1000
+                                dialog.show()
                             }
                         )
                     }
@@ -163,16 +185,30 @@ fun BuscarScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             CampoBusqueda(
                                 label = "Fecha de vuelta",
-                                valor = if (fechaVuelta.isEmpty()) "Elige fecha" else fechaVuelta,
+                                valor = fechaVuelta.ifEmpty { "Elige fecha" },
                                 icon = Icons.Default.CalendarMonth,
                                 onClick = {
-                                    DatePickerDialog(context, { _, y, m, d -> fechaVuelta = "$d/${m+1}/$y" }, 
-                                        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+                                    val dialog = DatePickerDialog(context, { _, y, m, d -> 
+                                        fechaVuelta = String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y) 
+                                    }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+                                    
+                                    val minDate = fechaIdaDate?.time ?: System.currentTimeMillis()
+                                    dialog.datePicker.minDate = minDate - 1000
+                                    dialog.show()
                                 }
                             )
                         }
                     }
                 }
+            }
+            
+            if (fechaInvalida) {
+                Text(
+                    "La fecha de regreso debe ser igual o posterior a la de ida",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp, start = 8.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -208,10 +244,14 @@ fun BuscarScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { /* Lógica de búsqueda */ },
+                onClick = { if (puedeBuscar) onNavigate("vuelos_disponibles") },
+                enabled = puedeBuscar,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AzulPrincipal)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AzulPrincipal,
+                    disabledContainerColor = GrisTexto.copy(alpha = 0.3f)
+                )
             ) {
                 Text("Buscar vuelos", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
@@ -262,7 +302,7 @@ fun BuscarScreen(
                                 filtroDestino = ""
                             }
                         )
-                        Divider(color = AzulMuyClaro)
+                        HorizontalDivider(color = AzulMuyClaro)
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package com.dan.walletlogin.ui.screens
+package com.dan.aerolineaTAE.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dan.walletlogin.ui.components.TaeBottomNavBar
-import com.dan.walletlogin.ui.theme.*
+import com.dan.aerolineaTAE.ui.components.TaeBottomNavBar
+import com.dan.aerolineaTAE.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,11 +89,15 @@ fun PerfilScreen(
             ) {
                 Column {
                     PerfilMenuItem(icon = Icons.Default.Person, title = "Datos personales") {}
-                    Divider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
+                    PerfilMenuItem(icon = Icons.Default.Security, title = "Seguridad (MFA)") {
+                        onNavigate("enroll_mfa")
+                    }
+                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
                     PerfilMenuItem(icon = Icons.Default.History, title = "Historial de vuelos") {}
-                    Divider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
                     PerfilMenuItem(icon = Icons.Default.Notifications, title = "Notificaciones") {}
-                    Divider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
                     PerfilMenuItem(icon = Icons.Default.Help, title = "Ayuda") {}
                 }
             }

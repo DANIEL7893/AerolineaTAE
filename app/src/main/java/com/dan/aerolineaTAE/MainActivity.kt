@@ -1,4 +1,4 @@
-package com.dan.walletlogin
+package com.dan.aerolineaTAE
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dan.walletlogin.navigation.NavGraph
-import com.dan.walletlogin.ui.theme.TaeTheme
+import com.dan.aerolineaTAE.navigation.NavGraph
+import com.dan.aerolineaTAE.ui.theme.TaeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,8 +22,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     val authViewModel: AuthViewModel = viewModel()
+                    val mfaViewModel: MfaViewModel = viewModel()
                     // Reemplazamos LoginScreen por el NavGraph para manejar toda la navegación
-                    NavGraph(authViewModel)
+                    NavGraph(authViewModel, mfaViewModel)
                 }
             }
         }

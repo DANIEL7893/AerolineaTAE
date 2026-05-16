@@ -1,4 +1,4 @@
-package com.dan.walletlogin.ui.theme
+package com.dan.aerolineaTAE.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
