@@ -149,7 +149,6 @@ fun DatosPersonalesScreen(
                         guardando = true
                         val fullPhone = countryCode.trim() + phoneNumber.trim()
                         
-                        // En onboarding solo guardamos los datos básicos. El MFA es opcional y se configura después.
                         val updates = mapOf(
                             "nombre" to nombre,
                             "apellido" to apellido,

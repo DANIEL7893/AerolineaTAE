@@ -36,7 +36,7 @@ fun MfaSettingsScreen(
     var guardando by remember { mutableStateOf(false) }
 
     var mfaEnabled by remember { mutableStateOf(false) }
-    var mfaType by remember { mutableStateOf("none") } // "pin" o "biometric"
+    var mfaType by remember { mutableStateOf("none") }
     var pin by remember { mutableStateOf("") }
 
     LaunchedEffect(userId) {
