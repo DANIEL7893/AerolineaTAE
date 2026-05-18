@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "87412966690",
+    "project_id": "wallet-login-bfa02",
+    "storage_bucket": "wallet-login-bfa02.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87412966690:android:665927db71d41b641d117b",
+        "android_client_info": {
+          "package_name": "com.dan.walletlogin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "87412966690-t727joh6eh9kudn1oaair005kgkmdu69.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dan.walletlogin",
+            "certificate_hash": "6dfcfc615bb58d0c9b63f71267e621273890bc80"
+          }
+        },
+        {
+          "client_id": "87412966690-fg4g6ti3ljqejar8t7cmgvjscelmfafd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDomTAA4xSKKE7C7H8St41t72ux4Kti7C4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "87412966690-fg4g6ti3ljqejar8t7cmgvjscelmfafd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
