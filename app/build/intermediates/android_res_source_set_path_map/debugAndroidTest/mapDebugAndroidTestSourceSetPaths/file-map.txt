@@ -1,0 +1,4 @@
+com.dan.aerolineaTAE.test.app-updated_navigation_xml-0 C:\Users\DANIEL\AndroidStudioProjects\Aerolinea TAE\app\build\generated\updated_navigation_xml\debugAndroidTest
+com.dan.aerolineaTAE.test.app-packageDebugAndroidTestResources-1 C:\Users\DANIEL\AndroidStudioProjects\Aerolinea TAE\app\build\intermediates\incremental\debugAndroidTest\packageDebugAndroidTestResources\merged.dir
+com.dan.aerolineaTAE.test.app-packageDebugAndroidTestResources-2 C:\Users\DANIEL\AndroidStudioProjects\Aerolinea TAE\app\build\intermediates\incremental\debugAndroidTest\packageDebugAndroidTestResources\stripped.dir
+com.dan.aerolineaTAE.test.app-debugAndroidTest-3 C:\Users\DANIEL\AndroidStudioProjects\Aerolinea TAE\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

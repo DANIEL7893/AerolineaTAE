@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">87412966690-fg4g6ti3ljqejar8t7cmgvjscelmfafd.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">87412966690</string>
+    <string name="google_api_key" translatable="false">AIzaSyDomTAA4xSKKE7C7H8St41t72ux4Kti7C4</string>
+    <string name="google_app_id" translatable="false">1:87412966690:android:665927db71d41b641d117b</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDomTAA4xSKKE7C7H8St41t72ux4Kti7C4</string>
+    <string name="google_storage_bucket" translatable="false">wallet-login-bfa02.firebasestorage.app</string>
+    <string name="project_id" translatable="false">wallet-login-bfa02</string>
+</resources>
