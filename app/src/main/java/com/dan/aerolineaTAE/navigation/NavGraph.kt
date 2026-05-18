@@ -7,44 +7,48 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.dan.aerolineaTAE.AuthState
 import com.dan.aerolineaTAE.AuthViewModel
 import com.dan.aerolineaTAE.LoginScreen
-import com.dan.aerolineaTAE.MfaViewModel
+import com.dan.aerolineaTAE.data.Reserva
 import com.dan.aerolineaTAE.ui.screens.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun NavGraph(
     authViewModel: AuthViewModel,
-    mfaViewModel: MfaViewModel,
     navController: NavHostController = rememberNavController()
 ) {
     val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Determinamos la pantalla inicial solo una vez al arrancar
     val startDestination = remember {
-        if (authViewModel.uiState.value is AuthState.Success) "home" else "login"
+        val state = authViewModel.uiState.value
+        when (state) {
+            is AuthState.Success -> "home"
+            is AuthState.RequiresOnboarding -> "onboarding"
+            is AuthState.RequiresMfa -> "mfa_challenge"
+            else -> "login"
+        }
     }
 
-    // Observar el estado de autenticación para redirigir
     LaunchedEffect(uiState) {
         val currentState = uiState
         when (currentState) {
             is AuthState.Success -> {
-                // Si el usuario se loguea (viene de login), lo mandamos a home
-                if (navController.currentDestination?.route == "login" || 
-                    navController.currentDestination?.route == "sms_code") {
+                if (navController.currentDestination?.route in listOf("login", "mfa_challenge", "onboarding", "datos_personales")) {
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
                     }
                 }
             }
             is AuthState.Idle -> {
-                // Si cierra sesión, lo mandamos a login
                 if (navController.currentDestination?.route != "login") {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
@@ -52,8 +56,18 @@ fun NavGraph(
                 }
             }
             is AuthState.RequiresMfa -> {
-                mfaViewModel.setResolver(currentState.resolver)
-                navController.navigate("sms_code")
+                if (navController.currentDestination?.route != "mfa_challenge") {
+                    navController.navigate("mfa_challenge") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            }
+            is AuthState.RequiresOnboarding -> {
+                if (navController.currentDestination?.route != "onboarding") {
+                    navController.navigate("onboarding") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
             }
             else -> {}
         }
@@ -67,25 +81,20 @@ fun NavGraph(
             LoginScreen(authViewModel)
         }
 
-        composable("sms_code") {
-            SmsCodeScreen(
-                mfaViewModel = mfaViewModel,
-                onSuccess = { user ->
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
+        composable("mfa_challenge") {
+            MfaChallengeScreen(authViewModel)
+        }
+
+        composable("onboarding") {
+            DatosPersonalesScreen(
+                authViewModel = authViewModel,
+                onBack = { 
+                    val email = (authViewModel.uiState.value as? AuthState.RequiresOnboarding)?.email ?: ""
+                    authViewModel.completeOnboarding(email)
                 }
             )
         }
 
-        composable("enroll_mfa") {
-            EnrollPhoneScreen(
-                mfaViewModel = mfaViewModel,
-                onBack = { navController.popBackStack() },
-                onSuccess = { navController.popBackStack() }
-            )
-        }
-        
         composable("home") {
             val email = (uiState as? AuthState.Success)?.email ?: ""
             HomeScreen(
@@ -106,15 +115,42 @@ fun NavGraph(
             )
         }
 
-        composable("vuelos_disponibles") {
+        composable(
+            route = "vuelos_disponibles/{destinoId}",
+            arguments = listOf(navArgument("destinoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val destinoId = backStackEntry.arguments?.getString("destinoId") ?: ""
             VuelosDisponiblesScreen(
-                onBack = { navController.popBackStack() }
+                destinoId = destinoId,
+                onBack = { navController.popBackStack() },
+                onComprar = { vuelo ->
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user != null) {
+                        val db = FirebaseFirestore.getInstance()
+                        val pnr = (1..6).map { (('A'..'Z') + ('0'..'9')).random() }.joinToString("")
+                        val nuevaReserva = Reserva(
+                            userId = user.uid,
+                            vueloId = vuelo.id,
+                            pnr = pnr,
+                            origen = vuelo.origen,
+                            destino = vuelo.destino,
+                            fecha = vuelo.fecha,
+                            horaSalida = vuelo.horaSalida,
+                            precio = vuelo.precio,
+                            fechaCompra = System.currentTimeMillis()
+                        )
+                        db.collection("reservas").add(nuevaReserva).addOnSuccessListener {
+                            navController.navigate("mis_viajes") {
+                                popUpTo("home")
+                            }
+                        }
+                    }
+                }
             )
         }
         
         composable("mis_viajes") {
             MisViajesScreen(
-                viajes = emptyList(), // TODO: conectar con Firestore
                 onNavigate = { route -> navController.navigate(route) }
             )
         }
@@ -126,6 +162,39 @@ fun NavGraph(
                 email = email,
                 onNavigate = { route -> navController.navigate(route) },
                 onCerrarSesion = { authViewModel.logout(context) }
+            )
+        }
+
+        composable("datos_personales") {
+            VerPerfilScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "boarding_pass/{pnr}",
+            arguments = listOf(navArgument("pnr") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val pnr = backStackEntry.arguments?.getString("pnr") ?: ""
+            BoardingPassScreen(
+                pnr = pnr,
+                onBack = { 
+                    navController.navigate("mis_viajes") {
+                        popUpTo("home")
+                    }
+                }
+            )
+        }
+
+        composable("ayuda") {
+            AyudaScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("mfa_settings") {
+            MfaSettingsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

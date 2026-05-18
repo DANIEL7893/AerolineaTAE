@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +28,24 @@ fun PerfilScreen(
     onNavigate: (String) -> Unit,
     onCerrarSesion: () -> Unit
 ) {
-    // cargar datos Firebase Auth
+    val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid ?: ""
+    
+    var nombreUsuario by remember { mutableStateOf(nombre) }
+
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val realName = document.getString("nombre")
+                    if (!realName.isNullOrBlank()) {
+                        nombreUsuario = realName
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -50,7 +67,6 @@ fun PerfilScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Cabecera de Perfil
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -65,7 +81,7 @@ fun PerfilScreen(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (nombre.isNotEmpty()) nombre.take(1).uppercase() else "U",
+                            text = if (nombreUsuario.isNotEmpty()) nombreUsuario.take(1).uppercase() else "U",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = Blanco
@@ -73,13 +89,12 @@ fun PerfilScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = nombre, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AzulPrincipal)
+                Text(text = nombreUsuario, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AzulPrincipal)
                 Text(text = email, fontSize = 14.sp, color = GrisTexto)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Menú de opciones
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -88,23 +103,22 @@ fun PerfilScreen(
                 colors = CardDefaults.cardColors(containerColor = Blanco)
             ) {
                 Column {
-                    PerfilMenuItem(icon = Icons.Default.Person, title = "Datos personales") {}
-                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
-                    PerfilMenuItem(icon = Icons.Default.Security, title = "Seguridad (MFA)") {
-                        onNavigate("enroll_mfa")
+                    PerfilMenuItem(icon = Icons.Default.Person, title = "Datos personales") {
+                        onNavigate("datos_personales")
                     }
                     HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
-                    PerfilMenuItem(icon = Icons.Default.History, title = "Historial de vuelos") {}
+                    PerfilMenuItem(icon = Icons.Default.Security, title = "Seguridad (MFA)") {
+                        onNavigate("mfa_settings")
+                    }
                     HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
-                    PerfilMenuItem(icon = Icons.Default.Notifications, title = "Notificaciones") {}
-                    HorizontalDivider(color = AzulMuyClaro, modifier = Modifier.padding(horizontal = 16.dp))
-                    PerfilMenuItem(icon = Icons.Default.Help, title = "Ayuda") {}
+                    PerfilMenuItem(icon = Icons.Default.Help, title = "Ayuda") {
+                        onNavigate("ayuda")
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cerrar sesión
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

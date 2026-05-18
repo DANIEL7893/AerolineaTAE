@@ -44,7 +44,6 @@ fun BuscarScreen(
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
-    // Validaciones
     val mismaCiudad = origen != null && destino != null && origen?.codigoIATA == destino?.codigoIATA
     
     val dateSDF = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -74,7 +73,6 @@ fun BuscarScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Toggle Ida / Ida y Vuelta
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,7 +103,6 @@ fun BuscarScreen(
                 }
             }
 
-            // Card de Origen/Destino
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Blanco),
@@ -159,7 +156,6 @@ fun BuscarScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Card de Fecha
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Blanco),
@@ -213,7 +209,6 @@ fun BuscarScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Card de Pasajeros
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Blanco),
@@ -244,7 +239,11 @@ fun BuscarScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { if (puedeBuscar) onNavigate("vuelos_disponibles") },
+                onClick = { 
+                    if (puedeBuscar) {
+                        onNavigate("vuelos_disponibles/${destino?.codigoIATA}")
+                    }
+                },
                 enabled = puedeBuscar,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(8.dp),

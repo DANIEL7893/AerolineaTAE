@@ -4,7 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -68,11 +70,13 @@ fun AuthContent(
         modifier = Modifier
             .fillMaxSize()
             .background(brush = gradient)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
-        // Logo
+        Spacer(modifier = Modifier.height(60.dp))
+
         Image(
             painter = painterResource(id = R.drawable.logoaerolinea),
             contentDescription = "Logo Aerolineas TAE",
@@ -81,7 +85,6 @@ fun AuthContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // titulo
         Text(
             text = if (isRegister) "Crear Cuenta" else "Bienvenido a Aerolineas TAE",
             fontSize = 32.sp,
@@ -94,7 +97,6 @@ fun AuthContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // campo email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -110,7 +112,6 @@ fun AuthContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // campo password
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -144,7 +145,6 @@ fun AuthContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // boton principal
         Button(
             onClick = {
                 if (isPasswordValid) {
@@ -164,22 +164,31 @@ fun AuthContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // boton google
         OutlinedButton(
             onClick = { onLoginGoogle(webClientId) },
             border = BorderStroke(2.dp, Color(0xFF000000)),
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = uiState !is AuthState.Loading
         ) {
-            Text(
-                text = "Continuar con Google",
-                color = Color(0xFF000000)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.google_logo),
+                    contentDescription = "Google Logo",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Continuar con Google",
+                    color = Color(0xFF000000)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // toggle registro
         TextButton(onClick = { isRegister = !isRegister }) {
             Text(if (isRegister) "¿Ya tienes cuenta? Entra" else "¿No tienes cuenta? Regístrate", color = Color(0xFF000000))
         }

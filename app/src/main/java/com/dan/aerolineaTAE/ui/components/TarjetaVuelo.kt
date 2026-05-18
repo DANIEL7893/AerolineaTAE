@@ -36,7 +36,6 @@ fun TarjetaVuelo(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Fila superior: Códigos IATA y Avión
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -64,7 +63,6 @@ fun TarjetaVuelo(
                 )
             }
 
-            // Ciudades debajo de los códigos
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -77,7 +75,6 @@ fun TarjetaVuelo(
             HorizontalDivider(color = AzulMuyClaro, thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Fila inferior: Info de vuelo y Precio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -91,7 +88,6 @@ fun TarjetaVuelo(
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    // Badge de estado
                     val badgeColor = if (estado == "Confirmado") VerdeConfirmado else AmarilloEstado
                     Surface(
                         color = badgeColor.copy(alpha = 0.1f),

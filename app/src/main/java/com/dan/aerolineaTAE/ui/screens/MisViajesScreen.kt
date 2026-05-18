@@ -1,31 +1,59 @@
 package com.dan.aerolineaTAE.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AirplaneTicket
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dan.aerolineaTAE.data.Reserva
 import com.dan.aerolineaTAE.ui.components.TaeBottomNavBar
-import com.dan.aerolineaTAE.ui.components.TarjetaVuelo
 import com.dan.aerolineaTAE.ui.theme.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisViajesScreen(
-    viajes: List<Any>, // TODO: conectar con Firestore
     onNavigate: (String) -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Próximos", "Anteriores")
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val userId = auth.currentUser?.uid ?: ""
+    
+    var reservas by remember { mutableStateOf<List<Reserva>>(emptyList()) }
+    var cargando by remember { mutableStateOf(true) }
+
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            db.collection("reservas")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener { result ->
+                    reservas = result.mapNotNull { it.toObject(Reserva::class.java).copy(id = it.id) }
+                    cargando = false
+                }
+                .addOnFailureListener {
+                    cargando = false
+                }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -35,108 +63,36 @@ fun MisViajesScreen(
             )
         },
         bottomBar = {
-            TaeBottomNavBar(
-                currentRoute = "mis_viajes",
-                onNavigate = onNavigate
-            )
+            TaeBottomNavBar(currentRoute = "mis_viajes", onNavigate = onNavigate)
         },
         containerColor = AzulMuyClaro
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Blanco,
-                contentColor = AzulPrincipal,
-                indicator = { tabPositions ->
-                    if (selectedTab < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = AzulPrincipal
-                        )
-                    }
-                }
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { 
-                            Text(
-                                text = title,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            ) 
-                        }
-                    )
-                }
-            }
-
-            if (viajes.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (cargando) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = AzulPrincipal)
+            } else if (reservas.isEmpty()) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.AirplaneTicket,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            tint = AzulClaro.copy(alpha = 0.3f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No tenés viajes aún",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AzulOscuro
-                        )
-                        Text(
-                            text = "Tus reservas aparecerán aquí",
-                            fontSize = 14.sp,
-                            color = GrisTexto
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = { onNavigate("buscar") },
-                            colors = ButtonDefaults.buttonColors(containerColor = AzulPrincipal)
-                        ) {
-                            Text("Buscar vuelos")
-                        }
+                    Icon(
+                        imageVector = Icons.Default.AirplaneTicket, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(64.dp), 
+                        tint = AzulClaro
+                    )
+                    Text("Aún no tienes viajes programados", color = GrisTexto, modifier = Modifier.padding(16.dp))
+                    Button(onClick = { onNavigate("buscar") }) {
+                        Text("Buscar vuelos")
                     }
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (selectedTab == 0) {
-                        items(viajes) { _ ->
-                            TarjetaVuelo(
-                                origen = "SAL",
-                                destino = "MIA",
-                                ciudadOrigen = "San Salvador",
-                                ciudadDestino = "Miami",
-                                fecha = "24 Oct 2026",
-                                hora = "08:30 AM",
-                                duracion = "2h 45m",
-                                precio = "$350.00",
-                                estado = "Confirmado"
-                            )
-                        }
-                    } else {
-                        item {
-                            Text(
-                                text = "No hay viajes anteriores",
-                                modifier = Modifier.padding(16.dp),
-                                color = GrisTexto
-                            )
-                        }
+                    items(reservas) { reserva ->
+                        CardReserva(reserva = reserva)
                     }
                 }
             }
@@ -144,18 +100,60 @@ fun MisViajesScreen(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun MisViajesEmptyPreview() {
-    TaeTheme {
-        MisViajesScreen(viajes = emptyList(), onNavigate = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MisViajesListPreview() {
-    TaeTheme {
-        MisViajesScreen(viajes = listOf(1), onNavigate = {})
+fun CardReserva(reserva: Reserva) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Blanco)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("CÓDIGO DE RESERVA (PNR)", fontSize = 10.sp, color = GrisTexto)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("PNR", reserva.pnr)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Código copiado", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(reserva.pnr, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = AzulPrincipal)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copiar", tint = AzulClaro, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Surface(
+                    color = AzulMuyClaro,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = reserva.estado, 
+                        color = AzulPrincipal, 
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = AzulMuyClaro)
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.FlightTakeoff, contentDescription = null, tint = AzulClaro)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text("${reserva.origen} ➔ ${reserva.destino}", fontWeight = FontWeight.Bold, color = AzulOscuro)
+                    Text("Fecha: ${reserva.fecha} | Hora: ${reserva.horaSalida}", fontSize = 12.sp, color = GrisTexto)
+                }
+            }
+        }
     }
 }

@@ -7,10 +7,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -18,8 +17,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dan.aerolineaTAE.data.Oferta
+import com.dan.aerolineaTAE.data.PopularDestino
 import com.dan.aerolineaTAE.ui.components.TaeBottomNavBar
 import com.dan.aerolineaTAE.ui.theme.*
+import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,23 +29,45 @@ fun HomeScreen(
     email: String,
     onNavigate: (String) -> Unit
 ) {
-    val nombre = email.split("@").firstOrNull() ?: "Usuario"
+    val db = FirebaseFirestore.getInstance()
+    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid ?: ""
+
+    var nombreUsuario by remember { mutableStateOf(email.split("@").firstOrNull() ?: "Usuario") }
+    var populares by remember { mutableStateOf<List<PopularDestino>>(emptyList()) }
+    var ofertas by remember { mutableStateOf<List<Oferta>>(emptyList()) }
+
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val realName = document.getString("nombre")
+                    if (!realName.isNullOrBlank()) {
+                        nombreUsuario = realName
+                    }
+                }
+            }
+        }
+
+        db.collection("destinos_populares").get().addOnSuccessListener { result ->
+            populares = result.map { it.toObject(PopularDestino::class.java).copy(id = it.id) }
+        }
+        
+        db.collection("ofertas").get().addOnSuccessListener { result ->
+            ofertas = result.map { it.toObject(Oferta::class.java).copy(id = it.id) }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Hola, $nombre",
+                        text = "Hola, $nombreUsuario",
                         color = AzulPrincipal,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                },
-                actions = {
-                    IconButton(onClick = { /* Notificaciones */ }) {
-                        Icon(Icons.Default.Notifications, contentDescription = null, tint = AzulClaro)
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AzulMuyClaro)
             )
@@ -61,7 +85,6 @@ fun HomeScreen(
         ) {
             item { Spacer(modifier = Modifier.height(20.dp)) }
 
-            // Card de búsqueda decorativa
             item {
                 Card(
                     modifier = Modifier
@@ -83,7 +106,6 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Sección: Destinos populares
             item {
                 Text(
                     text = "Destinos populares",
@@ -93,24 +115,20 @@ fun HomeScreen(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
                 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 8.dp)
-                ) {
-                    val populares = listOf(
-                        Triple("🇺🇸", "Miami", "$299"),
-                        Triple("🇬🇹", "Guatemala", "$150"),
-                        Triple("🇨🇴", "Bogotá", "$320"),
-                        Triple("🇲🇽", "Cancún", "$210")
-                    )
-                    items(populares) { destino ->
-                        DestinoCard(flag = destino.first, ciudad = destino.second, precio = destino.third)
+                if (populares.isNotEmpty()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(populares) { destino ->
+                            DestinoCard(
+                                flag = destino.flag,
+                                ciudad = destino.ciudad,
+                                precio = destino.precio
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Sección: Ofertas especiales
             item {
                 Text(
                     text = "Ofertas especiales",
@@ -121,12 +139,7 @@ fun HomeScreen(
                 )
             }
 
-            //Firestore
-            items(2) { index ->
-                val oferta = if (index == 0) "Vuela a Madrid" else "Escápate a Los Ángeles"
-                val precioOriginal = if (index == 0) "$850" else "$550"
-                val precioOferta = if (index == 0) "$699" else "$399"
-
+            items(ofertas) { oferta ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -135,18 +148,18 @@ fun HomeScreen(
                     colors = CardDefaults.cardColors(containerColor = AzulPrincipal)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = oferta, color = Blanco, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(text = oferta.titulo, color = Blanco, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = precioOriginal,
+                                text = oferta.precioOriginal,
                                 color = Blanco.copy(alpha = 0.6f),
                                 textDecoration = TextDecoration.LineThrough,
                                 fontSize = 14.sp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = precioOferta,
+                                text = oferta.precioOferta,
                                 color = Blanco,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 22.sp
@@ -168,9 +181,9 @@ fun DestinoCard(flag: String, ciudad: String, precio: String) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = flag, fontSize = 24.sp)
+            Text(text = flag, fontSize = 28.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = ciudad, fontWeight = FontWeight.Bold, color = AzulPrincipal)
+            Text(text = ciudad, fontWeight = FontWeight.Bold, color = AzulPrincipal, maxLines = 1)
             Text(text = "Desde $precio", fontSize = 12.sp, color = GrisTexto)
         }
     }
